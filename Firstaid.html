@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Aid Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            width: 800px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        #scenario, #toolbox, #quiz {
+            margin-bottom: 20px;
+        }
+        #toolbox {
+            display: flex;
+            justify-content: space-around;
+        }
+        .tool {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: move;
+        }
+        .tool img {
+            width: 50px;
+            height: 50px;
+        }
+        #drop-zone {
+            width: 100%;
+            height: 100px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #quiz {
+            display: none;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>First Aid Game</h1>
+        <div id="scenario">
+            <h2 id="scenario-title"></h2>
+            <p id="scenario-description"></p>
+            <div id="drop-zone">Drop the correct tool here</div>
+        </div>
+        <div id="toolbox"></div>
+        <div id="quiz">
+            <h2>Quiz</h2>
+            <p id="question"></p>
+            <div id="choices"></div>
+        </div>
+    </div>
+
+    <script>
+        const scenarios = [
+            {
+                title: "Minor Cut",
+                description: "A person has a small cut on their finger. What should you use to treat it?",
+                correctTool: "bandage",
+                quiz: {
+                    question: "What's the first step in treating a minor cut?",
+                    choices: [
+                        "Apply pressure to stop bleeding",
+                        "Clean the wound with soap and water",
+                        "Apply a bandage immediately",
+                        "Ignore it and let it heal on its own"
+                    ],
+                    correctAnswer: 1
+                }
+            },
+            {
+                title: "Sprained Ankle",
+                description: "Someone has twisted their ankle while playing sports. What should you apply?",
+                correctTool: "ice-pack",
+                quiz: {
+                    question: "What does RICE stand for in first aid?",
+                    choices: [
+                        "Rest, Ice, Compression, Elevation",
+                        "Run, Ignore, Compress, Exercise",
+                        "Relax, Ice, Cool, Eat",
+                        "Rest, Immobilize, Compress, Elevate"
+                    ],
+                    correctAnswer: 0
+                }
+            }
+        ];
+
+        const tools = [
+            { name: "bandage", image: "https://cdn-icons-png.flaticon.com/512/3004/3004458.png" },
+            { name: "ice-pack", image: "https://cdn-icons-png.flaticon.com/512/2354/2354282.png" },
+            { name: "scissors", image: "https://cdn-icons-png.flaticon.com/512/2454/2454282.png" }
+        ];
+
+        let currentScenario = 0;
+        let score = 0;
+
+        function loadScenario() {
+            const scenario = scenarios[currentScenario];
+            document.getElementById("scenario-title").textContent = scenario.title;
+            document.getElementById("scenario-description").textContent = scenario.description;
+            document.getElementById("quiz").style.display = "none";
+            document.getElementById("drop-zone").textContent = "Drop the correct tool here";
+            loadTools();
+        }
+
+        function loadTools() {
+            const toolbox = document.getElementById("toolbox");
+            toolbox.innerHTML = "";
+            tools.forEach(tool => {
+                const toolElement = document.createElement("div");
+                toolElement.className = "tool";
+                toolElement.draggable = true;
+                toolElement.innerHTML = `
+                    <img src="${tool.image}" alt="${tool.name}">
+                    <span>${tool.name}</span>
+                `;
+                toolElement.addEventListener("dragstart", (e) => {
+                    e.dataTransfer.setData("text/plain", tool.name);
+                });
+                toolbox.appendChild(toolElement);
+            });
+        }
+
+        function loadQuiz() {
+            const quiz = scenarios[currentScenario].quiz;
+            document.getElementById("question").textContent = quiz.question;
+            const choicesElement = document.getElementById("choices");
+            choicesElement.innerHTML = "";
+            quiz.choices.forEach((choice, index) => {
+                const button = document.createElement("button");
+                button.textContent = choice;
+                button.addEventListener("click", () => checkAnswer(index));
+                choicesElement.appendChild(button);
+            });
+            document.getElementById("quiz").style.display = "block";
+        }
+
+        function checkAnswer(choiceIndex) {
+            const correctAnswer = scenarios[currentScenario].quiz.correctAnswer;
+            if (choiceIndex === correctAnswer) {
+                score++;
+                alert("Correct! Good job!");
+            } else {
+                alert("Incorrect. The correct answer was: " + scenarios[currentScenario].quiz.choices[correctAnswer]);
+            }
+            nextScenario();
+        }
+
+        function nextScenario() {
+            currentScenario++;
+            if (currentScenario < scenarios.length) {
+                loadScenario();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            alert(`Game Over! Your score: ${score}/${scenarios.length * 2}`);
+            currentScenario = 0;
+            score = 0;
+            loadScenario();
+        }
+
+        const dropZone = document.getElementById("drop-zone");
+        dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+        });
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const droppedTool = e.dataTransfer.getData("text/plain");
+            if (droppedTool === scenarios[currentScenario].correctTool) {
+                score++;
+                dropZone.textContent = "Correct! Well done!";
+                setTimeout(loadQuiz, 1000);
+            } else {
+                dropZone.textContent = "Incorrect. Try again.";
+            }
+        });
+
+        loadScenario();
+    </script>
+</body>
+</html>
